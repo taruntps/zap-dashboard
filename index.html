@@ -1,239 +1,651 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>⚡ Zap Dashboard</title>
+  <title>⚡ Zap Dashboard — TPS Xperts</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Tailwind pre-built (static file — SRI supported) -->
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css"
-        integrity="sha384-wAkE1abywdsF0VP/+RDLxHADng231vt6gsqcjBzQFUoAQNkuN63+cJ4XDiE7LVjx"
-        crossorigin="anonymous">
-  <!-- Chart.js with SRI -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
           integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g"
           crossorigin="anonymous"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
-    .kpi-value { font-size: 2rem; font-weight: 700; line-height: 1.1; }
-    .kpi-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; }
-    .kpi-sub { font-size: 0.82rem; color: #64748b; margin-top: 2px; }
-    canvas { max-height: 220px; }
+    :root {
+      --bg: #060b18;
+      --bg2: #0d1526;
+      --bg3: #111d35;
+      --border: rgba(99,179,237,0.12);
+      --border-bright: rgba(99,179,237,0.28);
+      --text: #f0f6ff;
+      --text-muted: #7fa8d4;
+      --text-dim: #4a7099;
+      --blue: #4da6ff;
+      --blue-glow: rgba(77,166,255,0.18);
+      --green: #34d399;
+      --green-glow: rgba(52,211,153,0.18);
+      --yellow: #fbbf24;
+      --yellow-glow: rgba(251,191,36,0.18);
+      --purple: #a78bfa;
+      --purple-glow: rgba(167,139,250,0.18);
+      --red: #f87171;
+      --gold: #d4a017;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated grid background ─────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(77,166,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(77,166,255,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Glow orbs ────────────────────────────────────────────── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      animation: orb-drift 20s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 600px; height: 600px; background: rgba(77,166,255,0.07); top: -200px; left: -200px; animation-duration: 25s; }
+    .orb-2 { width: 500px; height: 500px; background: rgba(52,211,153,0.06); bottom: -150px; right: -150px; animation-duration: 30s; }
+    .orb-3 { width: 400px; height: 400px; background: rgba(167,139,250,0.05); top: 40%; left: 50%; animation-duration: 20s; }
+    @keyframes orb-drift {
+      0%   { transform: translate(0, 0) scale(1); }
+      50%  { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-20px, 50px) scale(0.95); }
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .wrapper { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 36px; flex-wrap: wrap; gap: 12px;
+    }
+    .header-brand { display: flex; align-items: center; gap: 14px; }
+    .zap-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #4da6ff, #7c3aed);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 24px rgba(77,166,255,0.4);
+      animation: icon-pulse 3s ease-in-out infinite;
+    }
+    @keyframes icon-pulse {
+      0%, 100% { box-shadow: 0 0 24px rgba(77,166,255,0.4); }
+      50%       { box-shadow: 0 0 40px rgba(77,166,255,0.7), 0 0 60px rgba(124,58,237,0.3); }
+    }
+    .header-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; color: #fff; }
+    .header-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .sync-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 999px; padding: 8px 16px;
+      font-size: 0.78rem; color: var(--text-muted);
+    }
+    .sync-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── KPI Grid ─────────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 400px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      cursor: default;
+    }
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-bright);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      border-radius: 18px 18px 0 0;
+    }
+    .kpi-card.blue::before  { background: linear-gradient(90deg, var(--blue), transparent); }
+    .kpi-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
+    .kpi-card.yellow::before{ background: linear-gradient(90deg, var(--yellow), transparent); }
+    .kpi-card.purple::before{ background: linear-gradient(90deg, var(--purple), transparent); }
+
+    .kpi-card-glow {
+      position: absolute; inset: 0; border-radius: 18px;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .kpi-card:hover .kpi-card-glow { opacity: 1; }
+    .blue  .kpi-card-glow { background: radial-gradient(ellipse at top left, var(--blue-glow), transparent 60%); }
+    .green .kpi-card-glow { background: radial-gradient(ellipse at top left, var(--green-glow), transparent 60%); }
+    .yellow.kpi-card-glow { background: radial-gradient(ellipse at top left, var(--yellow-glow), transparent 60%); }
+    .purple.kpi-card-glow { background: radial-gradient(ellipse at top left, var(--purple-glow), transparent 60%); }
+
+    .kpi-icon-wrap {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; margin-bottom: 14px;
+    }
+    .blue  .kpi-icon-wrap { background: var(--blue-glow); }
+    .green .kpi-icon-wrap { background: var(--green-glow); }
+    .yellow .kpi-icon-wrap { background: var(--yellow-glow); }
+    .purple .kpi-icon-wrap { background: var(--purple-glow); }
+
+    .kpi-label {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.4rem; font-weight: 700; line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .blue   .kpi-value { color: var(--blue); }
+    .green  .kpi-value { color: var(--green); }
+    .yellow .kpi-value { color: var(--yellow); }
+    .purple .kpi-value { color: var(--purple); }
+
+    .kpi-sub { font-size: 0.76rem; color: var(--text-dim); margin-top: 6px; }
+
+    /* ── Trend badge ──────────────────────────────────────────── */
+    .trend {
+      position: absolute; top: 18px; right: 16px;
+      font-size: 0.68rem; font-weight: 700; padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .trend.up   { background: rgba(52,211,153,0.15); color: var(--green); }
+    .trend.good { background: rgba(77,166,255,0.15); color: var(--blue); }
+
+    /* ── Cards container ──────────────────────────────────────── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      transition: border-color 0.25s;
+    }
+    .card:hover { border-color: var(--border-bright); }
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.85rem; font-weight: 600;
+      color: var(--text); letter-spacing: 0.01em;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 20px;
+    }
+    .card-title-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--blue); box-shadow: 0 0 8px var(--blue);
+    }
+
+    /* ── Charts row ───────────────────────────────────────────── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
+
+    .chart-wrap { position: relative; height: 240px; }
+
+    /* ── Savings meter (big ring) ─────────────────────────────── */
+    .ring-wrap {
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 0;
+      padding: 10px 0;
+    }
+    .ring-container { position: relative; width: 180px; height: 180px; }
+    .ring-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .ring-pct {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.2rem; font-weight: 700; color: var(--green);
+      line-height: 1;
+    }
+    .ring-label { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+    /* ── Project legend ───────────────────────────────────────── */
+    .project-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .project-row { display: flex; align-items: center; gap: 10px; }
+    .project-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .project-name { font-size: 0.8rem; color: var(--text); flex: 1; }
+    .project-bar-track { flex: 2; height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+    .project-bar-fill  { height: 100%; border-radius: 4px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+    .project-pct { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); width: 32px; text-align: right; }
+
+    /* ── Stats row ────────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 600px) { .stats-row { grid-template-columns: 1fr; } }
+
+    .stat-mini {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .stat-mini-icon { font-size: 1.5rem; }
+    .stat-mini-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.4rem; font-weight: 700; color: var(--text);
+    }
+    .stat-mini-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* ── Commands table ───────────────────────────────────────── */
+    .cmd-table { width: 100%; border-collapse: collapse; }
+    .cmd-table thead tr { border-bottom: 1px solid rgba(99,179,237,0.1); }
+    .cmd-table th {
+      font-size: 0.66rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-dim);
+      padding: 0 10px 12px; text-align: left;
+    }
+    .cmd-table th:last-child { text-align: right; }
+    .cmd-table tbody tr {
+      border-bottom: 1px solid rgba(99,179,237,0.05);
+      transition: background 0.15s;
+    }
+    .cmd-table tbody tr:hover { background: rgba(77,166,255,0.04); }
+    .cmd-table td { padding: 12px 10px; font-size: 0.82rem; }
+    .cmd-mono { font-family: 'Space Grotesk', monospace; color: var(--blue); font-size: 0.83rem; }
+    .savings-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(52,211,153,0.12); color: var(--green);
+      border-radius: 999px; padding: 3px 10px;
+      font-size: 0.72rem; font-weight: 700;
+    }
+    .cmd-count { color: var(--text-muted); font-size: 0.78rem; }
+    .bar-track { width: 80px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; }
+    .bar-fill  { height: 100%; background: linear-gradient(90deg, var(--green), #059669); border-radius: 4px; transition: width 1.4s cubic-bezier(0.4,0,0.2,1); }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    .footer {
+      text-align: center; margin-top: 48px;
+      font-size: 0.72rem; color: var(--text-dim);
+      border-top: 1px solid var(--border); padding-top: 24px;
+    }
+    .footer a { color: var(--text-muted); text-decoration: none; }
+    .footer a:hover { color: var(--blue); }
+
+    /* ── Fade-in animation on load ────────────────────────────── */
+    .fade-in {
+      opacity: 0; transform: translateY(16px);
+      animation: fade-up 0.55s ease forwards;
+    }
+    @keyframes fade-up {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.12s; }
+    .delay-3 { animation-delay: 0.2s; }
+    .delay-4 { animation-delay: 0.28s; }
+    .delay-5 { animation-delay: 0.36s; }
+    .delay-6 { animation-delay: 0.44s; }
+
+    /* ── Error banner ─────────────────────────────────────────── */
+    .error-banner {
+      background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;
+      color: var(--red); font-size: 0.84rem;
+    }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
+<body>
 
-  <!-- Header -->
-  <header class="flex items-center justify-between mb-8">
-    <div>
-      <h1 class="text-2xl font-bold flex items-center gap-2">
-        <span>⚡</span>
-        <span>Zap Dashboard</span>
-      </h1>
-      <p class="text-slate-400 text-sm mt-1">Claude Code Token Savings · TPS Xperts</p>
-    </div>
-    <div class="text-right">
-      <p class="text-xs text-slate-500">Last sync</p>
-      <p id="last-sync" class="text-sm font-medium text-slate-300">—</p>
-    </div>
-  </header>
+  <!-- Background orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 
-  <!-- KPI Cards -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-    <div class="card p-4">
-      <div class="kpi-label">Tokens Filtered</div>
-      <div id="kpi-tokens" class="kpi-value text-blue-400">—</div>
-      <div class="kpi-sub">all time</div>
-    </div>
-    <div class="card p-4">
-      <div class="kpi-label">Saved %</div>
-      <div id="kpi-pct" class="kpi-value text-emerald-400">—</div>
-      <div class="kpi-sub">avg reduction</div>
-    </div>
-    <div class="card p-4">
-      <div class="kpi-label">₹ Saved</div>
-      <div id="kpi-inr" class="kpi-value text-yellow-400">—</div>
-      <div class="kpi-sub">@ Claude Sonnet rate</div>
-    </div>
-    <div class="card p-4">
-      <div class="kpi-label">Commands</div>
-      <div id="kpi-cmds" class="kpi-value text-purple-400">—</div>
-      <div class="kpi-sub">filtered total</div>
-    </div>
-  </div>
+  <div class="wrapper">
 
-  <!-- Charts Row -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-
-    <!-- 30-day bar chart -->
-    <div class="card p-4 md:col-span-2">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="font-semibold text-sm text-slate-200">Daily Token Savings (30 days)</h2>
-        <span id="chart-total" class="text-xs text-slate-400"></span>
+    <!-- ── Header ─────────────────────────────────────────────── -->
+    <header class="header fade-in">
+      <div class="header-brand">
+        <div class="zap-icon">⚡</div>
+        <div>
+          <div class="header-title">Zap Dashboard</div>
+          <div class="header-sub">Claude Code Token Savings · TPS Xperts</div>
+        </div>
       </div>
-      <div class="overflow-x-auto">
-        <canvas id="dailyChart" width="600" height="200"></canvas>
+      <div class="sync-badge">
+        <div class="sync-dot"></div>
+        <span>Last sync&nbsp;&nbsp;<strong id="last-sync" style="color:var(--text)">—</strong></span>
+      </div>
+    </header>
+
+    <!-- ── Error banner (hidden by default) ─────────────────── -->
+    <div id="error-banner" class="error-banner" style="display:none">
+      ⚠ Could not load data.json — run the export script or check the file path.
+    </div>
+
+    <!-- ── KPI Cards ─────────────────────────────────────────── -->
+    <div class="kpi-grid fade-in delay-1">
+      <div class="kpi-card blue">
+        <div class="kpi-card-glow"></div>
+        <div class="kpi-icon-wrap">🔷</div>
+        <div class="kpi-label">Tokens Filtered</div>
+        <div id="kpi-tokens" class="kpi-value">—</div>
+        <div class="kpi-sub">all time</div>
+        <div class="trend good">LIVE</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-card-glow"></div>
+        <div class="kpi-icon-wrap">📉</div>
+        <div class="kpi-label">Saved %</div>
+        <div id="kpi-pct" class="kpi-value">—</div>
+        <div class="kpi-sub">avg reduction</div>
+        <div class="trend up">↑ GREAT</div>
+      </div>
+      <div class="kpi-card yellow">
+        <div class="kpi-card-glow"></div>
+        <div class="kpi-icon-wrap">💰</div>
+        <div class="kpi-label">₹ Saved</div>
+        <div id="kpi-inr" class="kpi-value">—</div>
+        <div class="kpi-sub">@ Sonnet rate</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-card-glow"></div>
+        <div class="kpi-icon-wrap">⚡</div>
+        <div class="kpi-label">Commands</div>
+        <div id="kpi-cmds" class="kpi-value">—</div>
+        <div class="kpi-sub">filtered total</div>
       </div>
     </div>
 
-    <!-- Per-project donut -->
-    <div class="card p-4">
-      <h2 class="font-semibold text-sm text-slate-200 mb-3">By Project</h2>
-      <canvas id="projectChart" width="200" height="200"></canvas>
-      <div id="project-legend" class="mt-3 space-y-1"></div>
+    <!-- ── Charts Row ─────────────────────────────────────────── -->
+    <div class="charts-row fade-in delay-2">
+
+      <!-- Daily bar chart -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-dot"></div>
+          Daily Token Savings
+          <span id="chart-total" style="font-size:0.72rem;color:var(--text-dim);font-weight:400;margin-left:auto"></span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="dailyChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Efficiency ring + project breakdown -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-dot" style="background:var(--green);box-shadow:0 0 8px var(--green)"></div>
+          Efficiency
+        </div>
+        <div class="ring-wrap">
+          <div class="ring-container">
+            <canvas id="ringChart" width="180" height="180"></canvas>
+            <div class="ring-center">
+              <div id="ring-pct" class="ring-pct">—</div>
+              <div class="ring-label">saved</div>
+            </div>
+          </div>
+        </div>
+        <div id="project-legend" class="project-list"></div>
+      </div>
+
     </div>
 
-  </div>
+    <!-- ── Mini stats ─────────────────────────────────────────── -->
+    <div class="stats-row fade-in delay-3">
+      <div class="stat-mini">
+        <div class="stat-mini-icon">📊</div>
+        <div>
+          <div id="stat-daily-avg" class="stat-mini-val">—</div>
+          <div class="stat-mini-label">Daily avg tokens saved</div>
+        </div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-icon">💸</div>
+        <div>
+          <div id="stat-monthly" class="stat-mini-val">—</div>
+          <div class="stat-mini-label">Projected monthly ₹ savings</div>
+        </div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-icon">🏆</div>
+        <div>
+          <div id="stat-best" class="stat-mini-val">—</div>
+          <div class="stat-mini-label">Best single day (tokens)</div>
+        </div>
+      </div>
+    </div>
 
-  <!-- Top Commands Table -->
-  <div class="card p-4">
-    <h2 class="font-semibold text-sm text-slate-200 mb-3">Top Commands by Savings</h2>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
+    <!-- ── Top Commands ───────────────────────────────────────── -->
+    <div class="card fade-in delay-4">
+      <div class="card-title">
+        <div class="card-title-dot" style="background:var(--purple);box-shadow:0 0 8px var(--purple)"></div>
+        Top Commands by Savings
+      </div>
+      <table class="cmd-table">
         <thead>
-          <tr class="text-slate-500 text-xs uppercase border-b border-slate-700">
-            <th class="text-left pb-2 font-semibold">Command</th>
-            <th class="text-right pb-2 font-semibold">Savings</th>
-            <th class="text-right pb-2 font-semibold">Count</th>
-            <th class="text-left pb-2 font-semibold pl-4">Bar</th>
+          <tr>
+            <th>#</th>
+            <th>Command</th>
+            <th>Savings</th>
+            <th>Runs</th>
+            <th style="text-align:left">Reduction bar</th>
           </tr>
         </thead>
         <tbody id="cmd-table"></tbody>
       </table>
     </div>
-  </div>
 
-  <!-- Footer -->
-  <footer class="mt-6 text-center text-xs text-slate-600">
-    Auto-refreshed every 30 min · Powered by
-    <a href="https://github.com/bitan-del/zap" class="text-slate-500 hover:text-slate-300 underline">Zap</a>
-    · TPS Xperts Global Certification
-  </footer>
+    <!-- ── Footer ─────────────────────────────────────────────── -->
+    <footer class="footer fade-in delay-6">
+      Auto-refreshed every 30 min via launchd ·
+      Powered by <a href="https://github.com/bitan-del/zap" target="_blank">Zap CLI</a> ·
+      TPS Xperts Global Certification Pvt Ltd
+    </footer>
+
+  </div><!-- /wrapper -->
 
   <script>
-    // ── Constants ─────────────────────────────────────────────────────────────
-    const SONNET_PRICE_PER_M = 3;   // USD per 1M input tokens
-    const USD_TO_INR = 84;
-    const PROJECT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
+    // ── Constants ────────────────────────────────────────────────
+    const SONNET_PER_M = 3;   // USD per 1M tokens
+    const USD_INR     = 84;
+    const PROJ_COLORS = ['#4da6ff','#34d399','#fbbf24','#a78bfa','#f87171'];
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    function fmtNum(n) {
-      if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-      if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'K';
-      return String(n);
+    // ── Helpers ──────────────────────────────────────────────────
+    const fmtNum = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n);
+    const calcINR = t => (t / 1e6) * SONNET_PER_M * USD_INR;
+    const fmtINR  = n => n >= 1000 ? '₹'+(n/1000).toFixed(1)+'K' : '₹'+n.toFixed(0);
+    const fmtDate = iso => new Date(iso).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+
+    // Animated counter
+    function animateCount(el, target, formatter, duration = 1000) {
+      const start = performance.now();
+      const step = ts => {
+        const p = Math.min((ts - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = formatter(Math.round(target * ease));
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
     }
 
-    function calcINR(tokensSaved) {
-      return (tokensSaved / 1_000_000) * SONNET_PRICE_PER_M * USD_TO_INR;
-    }
-
-    function fmtINR(n) {
-      if (n >= 1000) return '₹' + (n / 1000).toFixed(1) + 'K';
-      return '₹' + n.toFixed(0);
-    }
-
-    function fmtDate(iso) {
-      const d = new Date(iso);
-      return d.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    }
-
-    // ── Render ────────────────────────────────────────────────────────────────
+    // ── Render ───────────────────────────────────────────────────
     function render(data) {
       const g = data.global;
+      document.getElementById('last-sync').textContent = fmtDate(data.updated_at);
 
-      // KPI cards
-      document.getElementById('kpi-tokens').textContent = fmtNum(g.tokens_saved);
-      document.getElementById('kpi-pct').textContent    = g.efficiency.toFixed(1) + '%';
-      document.getElementById('kpi-inr').textContent    = fmtINR(calcINR(g.tokens_saved));
-      document.getElementById('kpi-cmds').textContent   = fmtNum(g.total_commands);
-      document.getElementById('last-sync').textContent  = fmtDate(data.updated_at);
+      // KPI counters (animated)
+      animateCount(document.getElementById('kpi-tokens'), g.tokens_saved, fmtNum, 1200);
+      animateCount(document.getElementById('kpi-pct'),    g.efficiency,   v => v.toFixed(1)+'%', 1000);
+      animateCount(document.getElementById('kpi-inr'),    calcINR(g.tokens_saved), fmtINR, 1100);
+      animateCount(document.getElementById('kpi-cmds'),   g.total_commands, fmtNum, 900);
+
+      // Ring text
+      document.getElementById('ring-pct').textContent = g.efficiency.toFixed(1)+'%';
 
       // Daily chart
       const daily = data.daily.slice(-30);
-      document.getElementById('chart-total').textContent =
-        fmtNum(daily.reduce((s, d) => s + d.tokens_saved, 0)) + ' tokens last 30d';
+      const totalLast30 = daily.reduce((s,d) => s + d.tokens_saved, 0);
+      document.getElementById('chart-total').textContent = fmtNum(totalLast30) + ' tokens last 30d';
 
+      // Mini stats
+      const avgDaily = totalLast30 / Math.max(daily.length, 1);
+      document.getElementById('stat-daily-avg').textContent = fmtNum(Math.round(avgDaily));
+      document.getElementById('stat-monthly').textContent   = fmtINR(calcINR(avgDaily * 30));
+      const best = Math.max(...daily.map(d => d.tokens_saved));
+      document.getElementById('stat-best').textContent = fmtNum(best);
+
+      // Daily Bar Chart
       new Chart(document.getElementById('dailyChart'), {
         type: 'bar',
         data: {
           labels: daily.map(d => d.date.slice(5)),
           datasets: [{
-            label: 'Tokens Saved',
             data: daily.map(d => d.tokens_saved),
-            backgroundColor: '#3b82f688',
-            borderColor: '#3b82f6',
+            backgroundColor: ctx => {
+              const chart = ctx.chart;
+              const {ctx: c, chartArea} = chart;
+              if (!chartArea) return '#4da6ff88';
+              const grad = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+              grad.addColorStop(0, 'rgba(77,166,255,0.85)');
+              grad.addColorStop(1, 'rgba(77,166,255,0.2)');
+              return grad;
+            },
+            borderColor: 'rgba(77,166,255,0.9)',
             borderWidth: 1,
-            borderRadius: 3,
+            borderRadius: 5,
+            borderSkipped: false,
           }]
         },
         options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 1200, easing: 'easeInOutQuart' },
+          plugins: { legend: { display: false }, tooltip: {
+            backgroundColor: '#0d1526', borderColor: 'rgba(77,166,255,0.3)',
+            borderWidth: 1, titleColor: '#7fa8d4', bodyColor: '#f0f6ff',
+            padding: 10,
+            callbacks: { label: ctx => ' ' + fmtNum(ctx.raw) + ' tokens saved' }
+          }},
           scales: {
-            x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
-            y: { ticks: { color: '#64748b', font: { size: 10 }, callback: v => fmtNum(v) }, grid: { color: '#1e293b' } }
+            x: {
+              ticks: { color: '#4a7099', font: { size: 10 }, maxRotation: 0 },
+              grid:  { display: false },
+              border: { display: false }
+            },
+            y: {
+              ticks: { color: '#4a7099', font: { size: 10 }, callback: v => fmtNum(v) },
+              grid:  { color: 'rgba(77,166,255,0.05)', drawBorder: false },
+              border:{ display: false }
+            }
           }
         }
       });
 
-      // Project donut
-      const projects = data.projects;
-      new Chart(document.getElementById('projectChart'), {
+      // Efficiency ring (doughnut)
+      const pct = g.efficiency;
+      new Chart(document.getElementById('ringChart'), {
         type: 'doughnut',
         data: {
-          labels: projects.map(p => p.name),
           datasets: [{
-            data: projects.map(p => p.pct),
-            backgroundColor: PROJECT_COLORS.slice(0, projects.length),
+            data: [pct, 100 - pct],
+            backgroundColor: ['#34d399', 'rgba(255,255,255,0.04)'],
             borderWidth: 0,
-            hoverOffset: 6,
+            hoverOffset: 0,
           }]
         },
         options: {
-          responsive: true,
-          cutout: '65%',
-          plugins: { legend: { display: false } }
+          responsive: false,
+          cutout: '72%',
+          animation: { duration: 1400, easing: 'easeInOutQuart' },
+          plugins: { legend: { display: false }, tooltip: { enabled: false } }
         }
       });
 
       // Project legend
-      const legend = document.getElementById('project-legend');
-      legend.innerHTML = projects.map((p, i) => `
-        <div class="flex items-center justify-between text-xs">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full inline-block" style="background:${PROJECT_COLORS[i]}"></span>
-            <span class="text-slate-300">${p.name}</span>
+      const projects = data.projects;
+      document.getElementById('project-legend').innerHTML = projects.map((p, i) => `
+        <div class="project-row">
+          <div class="project-dot" style="background:${PROJ_COLORS[i]};box-shadow:0 0 6px ${PROJ_COLORS[i]}66"></div>
+          <div class="project-name">${p.name}</div>
+          <div class="project-bar-track">
+            <div class="project-bar-fill" style="width:0%;background:${PROJ_COLORS[i]}" data-width="${p.pct}"></div>
           </div>
-          <span class="text-slate-400 font-medium">${p.pct}%</span>
+          <div class="project-pct" style="color:${PROJ_COLORS[i]}">${p.pct}%</div>
         </div>`).join('');
 
-      // Top commands table
-      const tbody = document.getElementById('cmd-table');
-      tbody.innerHTML = data.top_commands.map(c => `
-        <tr class="border-b border-slate-800">
-          <td class="py-2 font-mono text-slate-200">${c.command}</td>
-          <td class="py-2 text-right font-semibold text-emerald-400">−${c.savings_pct}%</td>
-          <td class="py-2 text-right text-slate-400">${c.count}×</td>
-          <td class="py-2 pl-4 w-32">
-            <div class="h-1.5 rounded-full bg-slate-700 overflow-hidden">
-              <div class="h-full rounded-full bg-emerald-500" style="width:${c.savings_pct}%"></div>
+      // Animate project bars after a tick
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.querySelectorAll('.project-bar-fill').forEach(el => {
+          el.style.width = el.dataset.width + '%';
+        });
+      }));
+
+      // Commands table
+      document.getElementById('cmd-table').innerHTML = data.top_commands.map((c, i) => `
+        <tr>
+          <td style="color:var(--text-dim);width:32px">${i+1}</td>
+          <td><span class="cmd-mono">${c.command}</span></td>
+          <td><span class="savings-pill">↓ ${c.savings_pct}%</span></td>
+          <td class="cmd-count">${c.count}×</td>
+          <td>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:0%" data-width="${c.savings_pct}"></div>
             </div>
           </td>
         </tr>`).join('');
+
+      // Animate command bars
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.querySelectorAll('.bar-fill').forEach(el => {
+          el.style.width = el.dataset.width + '%';
+        });
+      }));
     }
 
-    // ── Bootstrap ─────────────────────────────────────────────────────────────
-    fetch('./data/data.json')
+    // ── Bootstrap ────────────────────────────────────────────────
+    fetch('./data/data.json?v=' + Date.now())
       .then(r => r.json())
       .then(render)
-      .catch(err => {
-        console.error('Failed to load data.json:', err);
-        document.querySelector('header').insertAdjacentHTML('afterend',
-          '<div class="bg-red-900/40 border border-red-500 rounded-lg p-4 mb-6 text-red-300 text-sm">⚠ Could not load data.json. Run the export script or check the file path.</div>'
-        );
+      .catch(() => {
+        document.getElementById('error-banner').style.display = 'block';
       });
   </script>
 </body>
