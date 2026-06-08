@@ -1,54 +1,45 @@
 {
-  "updated_at": "2026-06-09T10:30:00",
+  "updated_at": "2026-06-09T02:17:38",
   "global": {
-    "total_commands": 127,
-    "tokens_input": 48302,
-    "tokens_output": 9142,
-    "tokens_saved": 39160,
-    "efficiency": 81.1
+    "total_commands": 0,
+    "tokens_input": 0,
+    "tokens_output": 0,
+    "tokens_saved": 0,
+    "efficiency": 0
   },
-  "daily": [
-    { "date": "2026-05-11", "tokens_saved": 800,  "commands": 4  },
-    { "date": "2026-05-12", "tokens_saved": 1200, "commands": 6  },
-    { "date": "2026-05-13", "tokens_saved": 950,  "commands": 5  },
-    { "date": "2026-05-14", "tokens_saved": 2100, "commands": 10 },
-    { "date": "2026-05-15", "tokens_saved": 1800, "commands": 8  },
-    { "date": "2026-05-16", "tokens_saved": 500,  "commands": 3  },
-    { "date": "2026-05-17", "tokens_saved": 300,  "commands": 2  },
-    { "date": "2026-05-18", "tokens_saved": 2400, "commands": 11 },
-    { "date": "2026-05-19", "tokens_saved": 1900, "commands": 9  },
-    { "date": "2026-05-20", "tokens_saved": 1600, "commands": 8  },
-    { "date": "2026-05-21", "tokens_saved": 2200, "commands": 10 },
-    { "date": "2026-05-22", "tokens_saved": 1100, "commands": 5  },
-    { "date": "2026-05-23", "tokens_saved": 700,  "commands": 4  },
-    { "date": "2026-05-24", "tokens_saved": 400,  "commands": 2  },
-    { "date": "2026-05-25", "tokens_saved": 2800, "commands": 13 },
-    { "date": "2026-05-26", "tokens_saved": 3100, "commands": 14 },
-    { "date": "2026-05-27", "tokens_saved": 2500, "commands": 12 },
-    { "date": "2026-05-28", "tokens_saved": 1700, "commands": 8  },
-    { "date": "2026-05-29", "tokens_saved": 900,  "commands": 4  },
-    { "date": "2026-05-30", "tokens_saved": 600,  "commands": 3  },
-    { "date": "2026-05-31", "tokens_saved": 450,  "commands": 2  },
-    { "date": "2026-06-01", "tokens_saved": 3200, "commands": 15 },
-    { "date": "2026-06-02", "tokens_saved": 2900, "commands": 13 },
-    { "date": "2026-06-03", "tokens_saved": 2100, "commands": 10 },
-    { "date": "2026-06-04", "tokens_saved": 1800, "commands": 9  },
-    { "date": "2026-06-05", "tokens_saved": 2400, "commands": 11 },
-    { "date": "2026-06-06", "tokens_saved": 900,  "commands": 4  },
-    { "date": "2026-06-07", "tokens_saved": 700,  "commands": 3  },
-    { "date": "2026-06-08", "tokens_saved": 3500, "commands": 16 },
-    { "date": "2026-06-09", "tokens_saved": 1260, "commands": 6  }
-  ],
+  "daily": [],
   "projects": [
-    { "name": "tps-cert-portal", "tokens_saved": 20363, "pct": 52 },
-    { "name": "regulyze",         "tokens_saved": 12139, "pct": 31 },
-    { "name": "iso-reports",      "tokens_saved": 6658,  "pct": 17 }
+    {
+      "name": "tps-cert-portal",
+      "tokens_saved": 0,
+      "pct": 0
+    },
+    {
+      "name": "regulyze",
+      "tokens_saved": 0,
+      "pct": 0
+    },
+    {
+      "name": "iso-reports",
+      "tokens_saved": 0,
+      "pct": 0
+    }
   ],
   "top_commands": [
-    { "command": "npm test",    "savings_pct": 90, "count": 5  },
-    { "command": "git diff",    "savings_pct": 75, "count": 8  },
-    { "command": "git status",  "savings_pct": 80, "count": 10 },
-    { "command": "git log",     "savings_pct": 80, "count": 6  },
-    { "command": "ls / tree",   "savings_pct": 80, "count": 10 }
+    {
+      "command": "git status",
+      "savings_pct": 80,
+      "count": 0
+    },
+    {
+      "command": "git diff",
+      "savings_pct": 75,
+      "count": 0
+    },
+    {
+      "command": "npm test",
+      "savings_pct": 90,
+      "count": 0
+    }
   ]
 }
