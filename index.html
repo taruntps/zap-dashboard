@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>⚡ Zap Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind pre-built (static file — SRI supported) -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css"
+        integrity="sha384-wAkE1abywdsF0VP/+RDLxHADng231vt6gsqcjBzQFUoAQNkuN63+cJ4XDiE7LVjx"
+        crossorigin="anonymous">
+  <!-- Chart.js with SRI -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+          integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g"
+          crossorigin="anonymous"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+    .kpi-value { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+    .kpi-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; }
+    .kpi-sub { font-size: 0.82rem; color: #64748b; margin-top: 2px; }
+    canvas { max-height: 220px; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
+
+  <!-- Header -->
+  <header class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold flex items-center gap-2">
+        <span>⚡</span>
+        <span>Zap Dashboard</span>
+      </h1>
+      <p class="text-slate-400 text-sm mt-1">Claude Code Token Savings · TPS Xperts</p>
+    </div>
+    <div class="text-right">
+      <p class="text-xs text-slate-500">Last sync</p>
+      <p id="last-sync" class="text-sm font-medium text-slate-300">—</p>
+    </div>
+  </header>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="card p-4">
+      <div class="kpi-label">Tokens Filtered</div>
+      <div id="kpi-tokens" class="kpi-value text-blue-400">—</div>
+      <div class="kpi-sub">all time</div>
+    </div>
+    <div class="card p-4">
+      <div class="kpi-label">Saved %</div>
+      <div id="kpi-pct" class="kpi-value text-emerald-400">—</div>
+      <div class="kpi-sub">avg reduction</div>
+    </div>
+    <div class="card p-4">
+      <div class="kpi-label">₹ Saved</div>
+      <div id="kpi-inr" class="kpi-value text-yellow-400">—</div>
+      <div class="kpi-sub">@ Claude Sonnet rate</div>
+    </div>
+    <div class="card p-4">
+      <div class="kpi-label">Commands</div>
+      <div id="kpi-cmds" class="kpi-value text-purple-400">—</div>
+      <div class="kpi-sub">filtered total</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+    <!-- 30-day bar chart -->
+    <div class="card p-4 md:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-semibold text-sm text-slate-200">Daily Token Savings (30 days)</h2>
+        <span id="chart-total" class="text-xs text-slate-400"></span>
+      </div>
+      <div class="overflow-x-auto">
+        <canvas id="dailyChart" width="600" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Per-project donut -->
+    <div class="card p-4">
+      <h2 class="font-semibold text-sm text-slate-200 mb-3">By Project</h2>
+      <canvas id="projectChart" width="200" height="200"></canvas>
+      <div id="project-legend" class="mt-3 space-y-1"></div>
+    </div>
+
+  </div>
+
+  <!-- Top Commands Table -->
+  <div class="card p-4">
+    <h2 class="font-semibold text-sm text-slate-200 mb-3">Top Commands by Savings</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-slate-500 text-xs uppercase border-b border-slate-700">
+            <th class="text-left pb-2 font-semibold">Command</th>
+            <th class="text-right pb-2 font-semibold">Savings</th>
+            <th class="text-right pb-2 font-semibold">Count</th>
+            <th class="text-left pb-2 font-semibold pl-4">Bar</th>
+          </tr>
+        </thead>
+        <tbody id="cmd-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-6 text-center text-xs text-slate-600">
+    Auto-refreshed every 30 min · Powered by
+    <a href="https://github.com/bitan-del/zap" class="text-slate-500 hover:text-slate-300 underline">Zap</a>
+    · TPS Xperts Global Certification
+  </footer>
+
+  <script>
+    // ── Constants ─────────────────────────────────────────────────────────────
+    const SONNET_PRICE_PER_M = 3;   // USD per 1M input tokens
+    const USD_TO_INR = 84;
+    const PROJECT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function fmtNum(n) {
+      if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+      if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'K';
+      return String(n);
+    }
+
+    function calcINR(tokensSaved) {
+      return (tokensSaved / 1_000_000) * SONNET_PRICE_PER_M * USD_TO_INR;
+    }
+
+    function fmtINR(n) {
+      if (n >= 1000) return '₹' + (n / 1000).toFixed(1) + 'K';
+      return '₹' + n.toFixed(0);
+    }
+
+    function fmtDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    function render(data) {
+      const g = data.global;
+
+      // KPI cards
+      document.getElementById('kpi-tokens').textContent = fmtNum(g.tokens_saved);
+      document.getElementById('kpi-pct').textContent    = g.efficiency.toFixed(1) + '%';
+      document.getElementById('kpi-inr').textContent    = fmtINR(calcINR(g.tokens_saved));
+      document.getElementById('kpi-cmds').textContent   = fmtNum(g.total_commands);
+      document.getElementById('last-sync').textContent  = fmtDate(data.updated_at);
+
+      // Daily chart
+      const daily = data.daily.slice(-30);
+      document.getElementById('chart-total').textContent =
+        fmtNum(daily.reduce((s, d) => s + d.tokens_saved, 0)) + ' tokens last 30d';
+
+      new Chart(document.getElementById('dailyChart'), {
+        type: 'bar',
+        data: {
+          labels: daily.map(d => d.date.slice(5)),
+          datasets: [{
+            label: 'Tokens Saved',
+            data: daily.map(d => d.tokens_saved),
+            backgroundColor: '#3b82f688',
+            borderColor: '#3b82f6',
+            borderWidth: 1,
+            borderRadius: 3,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#64748b', font: { size: 10 }, callback: v => fmtNum(v) }, grid: { color: '#1e293b' } }
+          }
+        }
+      });
+
+      // Project donut
+      const projects = data.projects;
+      new Chart(document.getElementById('projectChart'), {
+        type: 'doughnut',
+        data: {
+          labels: projects.map(p => p.name),
+          datasets: [{
+            data: projects.map(p => p.pct),
+            backgroundColor: PROJECT_COLORS.slice(0, projects.length),
+            borderWidth: 0,
+            hoverOffset: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '65%',
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // Project legend
+      const legend = document.getElementById('project-legend');
+      legend.innerHTML = projects.map((p, i) => `
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full inline-block" style="background:${PROJECT_COLORS[i]}"></span>
+            <span class="text-slate-300">${p.name}</span>
+          </div>
+          <span class="text-slate-400 font-medium">${p.pct}%</span>
+        </div>`).join('');
+
+      // Top commands table
+      const tbody = document.getElementById('cmd-table');
+      tbody.innerHTML = data.top_commands.map(c => `
+        <tr class="border-b border-slate-800">
+          <td class="py-2 font-mono text-slate-200">${c.command}</td>
+          <td class="py-2 text-right font-semibold text-emerald-400">−${c.savings_pct}%</td>
+          <td class="py-2 text-right text-slate-400">${c.count}×</td>
+          <td class="py-2 pl-4 w-32">
+            <div class="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+              <div class="h-full rounded-full bg-emerald-500" style="width:${c.savings_pct}%"></div>
+            </div>
+          </td>
+        </tr>`).join('');
+    }
+
+    // ── Bootstrap ─────────────────────────────────────────────────────────────
+    fetch('./data/data.json')
+      .then(r => r.json())
+      .then(render)
+      .catch(err => {
+        console.error('Failed to load data.json:', err);
+        document.querySelector('header').insertAdjacentHTML('afterend',
+          '<div class="bg-red-900/40 border border-red-500 rounded-lg p-4 mb-6 text-red-300 text-sm">⚠ Could not load data.json. Run the export script or check the file path.</div>'
+        );
+      });
+  </script>
+</body>
+</html>
